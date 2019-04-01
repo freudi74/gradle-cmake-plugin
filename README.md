@@ -71,6 +71,36 @@ and configure by:
 	  buildClean=false
 	}
 
+## Auto-created tasks
+
+### cmakeConfigure
+Calls CMake to generate your build scripts in the folder selected by workingFolder.
+
+### cmakeBuild
+Calls CMake --build in the folder selected by workingFolder to actually build.
+
+### cmakeClean
+Cleans the workingFolder.
+
+## examples
+clean, configure and build:
+	
+	./gradlew cmakeClean cmakeConfigure cmakebBuild
+
+if you have assemble and clean tasks in your gradle project already you can also use:
+	
+	assemble.dependsOn cmakeBuild
+	cmakeBuild.dependsOn cmakeConfigure
+	clean.dependsOn cmakeClean
+
+and just call
+
+	./gradlew clean assemble
+	
+if you want to get the output of cmake, add -i to your gradle call, for example:
+	
+	./gradlew cmakeConfigure -i
+	
 ## Custom tasks
 
 You can create custom tasks like so:
