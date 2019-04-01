@@ -10,27 +10,27 @@ Plugin applies the base plugin automatically, and hooks msbuild output folders i
 
 ## To apply the plugin:
 
-// Starting from gradle 2.1
-plugins {
-  id 'net.freudasoft.gradle-cmake-plugin' version '0.0.1'
-}
+	// Starting from gradle 2.1
+	plugins {
+	  id 'net.freudasoft.gradle-cmake-plugin' version '0.0.1'
+	}
 
 or
     
-buildscript {
-  repositories {
-    maven {
-      url = uri('../gradle-cmake-plugin/build/repo');
-    }
-  }
-  dependencies {
-    classpath 'net.freudasoft:gradle-cmake-plugin:0.0.1'
-  }
-  repositories {
-    mavenCentral()
-  }
-}
-apply plugin: 'net.freudasoft.gradle-cmake-plugin'
+	buildscript {
+	  repositories {
+	    maven {
+	      url = uri('../gradle-cmake-plugin/build/repo');
+	    }
+	  }
+	  dependencies {
+	    classpath 'net.freudasoft:gradle-cmake-plugin:0.0.1'
+	  }
+	  repositories {
+	    mavenCentral()
+	  }
+	}
+	apply plugin: 'net.freudasoft.gradle-cmake-plugin'
 
 and configure by:
 
