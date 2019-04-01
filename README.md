@@ -73,11 +73,11 @@ and configure by:
 
 ## Auto-created tasks
 
-* cmakeConfigure: Calls CMake to generate your build scripts in the folder selected by workingFolder.
+* *cmakeConfigure*: Calls CMake to generate your build scripts in the folder selected by workingFolder.
 
-* cmakeBuild: Calls CMake --build in the folder selected by workingFolder to actually build.
+* *cmakeBuild*: Calls CMake --build in the folder selected by workingFolder to actually build.
 
-* cmakeClean: Cleans the workingFolder.
+* *cmakeClean*: Cleans the workingFolder.
 
 ## examples
 
