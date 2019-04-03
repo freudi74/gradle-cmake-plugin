@@ -131,7 +131,7 @@ You can also "import" the settings you've made in the main configuration "cmake"
 	  workingFolder=file("$buildDir/cmake")
 
 	  sourceFolder=file("$projectDir/src/main/cpp")
-	  installPrefix=file("${System.properties['user.home']}")
+	  installPrefix="${System.properties['user.home']}"
 
 	  generator='Visual Studio 15 2017'
 	  platform='x64'
