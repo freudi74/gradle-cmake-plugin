@@ -101,7 +101,8 @@ If you want to get the output of cmake, add -i to your gradle call, for example:
 	
 ## Custom tasks
 
-You can create custom tasks like so:
+~~You can create custom tasks like so:~~
+**not yet implemented**
 
 	import net.freudasoft.CMakePlugin
 
@@ -109,6 +110,8 @@ You can create custom tasks like so:
 	  sourceFolder=file("$projectDir/src/main/cpp/foo")
 	  // Other properties
 	}
+
+
 
 ## License
 
