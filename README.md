@@ -1,7 +1,10 @@
 # gradle-cmake-plugin
 This plugin allows to configure and build using CMake. 
 
-Plugin applies the base plugin automatically, and hooks msbuild output folders into the clean task process. Below tasks are provided by the plugin:
+This plugin should work as documented, but is in an early development phase. 
+If you have requests or find bugs, please create an issue.
+
+Plugin applies the base plugin automatically. Below tasks are provided by the plugin:
 
 ## Prerequisites
 
