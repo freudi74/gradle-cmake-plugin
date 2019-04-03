@@ -10,7 +10,7 @@ Plugin applies the base plugin automatically, and hooks msbuild output folders i
 ## To apply the plugin:
 	// Starting from gradle 2.1
 	plugins {
-	  id 'net.freudasoft.gradle-cmake-plugin' version '0.0.1'
+	  id 'net.freudasoft.gradle-cmake-plugin' version '0.0.2'
 	}
 
 or
@@ -22,7 +22,7 @@ or
 	    }
 	  }
 	  dependencies {
-	    classpath 'net.freudasoft:gradle-cmake-plugin:0.0.1'
+	    classpath 'net.freudasoft:gradle-cmake-plugin:0.0.2'
 	  }
 	  repositories {
 	    mavenCentral()
@@ -44,7 +44,7 @@ and configure by:
 	  // optional source folder. This is where the main CMakeLists.txt file resides. Default is ./src/main/cpp
 	  sourceFolder=file("$projectDir/src/main/cpp")
 	  // optional install prefix. By default, install prefix is empty.
-	  installPrefix=file("${System.properties['user.home']}")
+	  installPrefix="${System.properties['user.home']}"
 
 	  // select a generator (optional, otherwise cmake's default generator is used)
 	  generator='Visual Studio 15 2017'
@@ -101,14 +101,55 @@ If you want to get the output of cmake, add -i to your gradle call, for example:
 	
 ## Custom tasks
 
-You can create custom tasks like so:
+You can create custom tasks the following way:
 
-	import net.freudasoft.CMakePlugin
-
-	task configureFoo(type: CMakePlugin) {
+	task configureFoo(type: net.freudasoft.CMakeConfigureTask) {
 	  sourceFolder=file("$projectDir/src/main/cpp/foo")
-	  // Other properties
+	  workingFolder=file("$buildDir/cmake/foo")
+	  // ... other parameters you need, see above, except the ones listed under cmakeBuild Parameters
 	}
+	
+	task buildFoo(type: net.freudasoft.CMakeBuildTask) {
+	  workingFolder=file("$buildDir/cmake/foo")
+	  // ... other parameters you need, see above, except the ones listed under cmakeConfigure parameters
+	}
+
+	buildFoo.dependsOn configureFoo // optional --- make sure its configured when you run the build task
+
+### Custom tasks using main configuration
+
+You can also "import" the settings you've made in the main configuration "cmake" using the 'configureFromProject()' call:
+
+	cmake {
+	  executable='/my/path/to/cmake'
+	  workingFolder=file("$buildDir/cmake")
+
+	  sourceFolder=file("$projectDir/src/main/cpp")
+	  installPrefix=file("${System.properties['user.home']}")
+
+	  generator='Visual Studio 15 2017'
+	  platform='x64'
+	}
+
+	task cmakeConfigureX86(type: net.freudasoft.CMakeConfigureTask) {
+	  configureFromProject() // uses everything in the cmake { ... } section.
+
+	  // overwrite target platform
+	  platform='x86'
+	  // set a different working folder to not collide with default task
+	  workingFolder=file("$buildDir/cmake_x86")
+	}
+	
+	task cmakeBuildX86(type: net.freudasoft.CMakeBuildTask) {
+	  configureFromProject() // uses everything in the cmake { ... } section.
+	  workingFolder=file("$buildDir/cmake_x86")
+	}
+
+	cmakeBuildX86.dependsOn cmakeConfigureX86
+
+## Stability
+
+This is a very young project. There might be some API breaking changes in newer versions.
 
 ## License
 

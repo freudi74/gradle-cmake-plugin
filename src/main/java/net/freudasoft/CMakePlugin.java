@@ -18,15 +18,16 @@ package net.freudasoft;
 
 import org.gradle.api.*;
 import org.gradle.api.logging.LogLevel;
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.TaskContainer;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.List;
 
 public class CMakePlugin implements Plugin<Project> {
-
     private boolean deleteDirectory(File directoryToBeDeleted) {
         File[] allContents = directoryToBeDeleted.listFiles();
         if (allContents != null) {
@@ -39,110 +40,44 @@ public class CMakePlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        CMakePluginExtension extension = project.getExtensions().create("cmake", CMakePluginExtension.class,
-                new File( project.getBuildDir(), "cmake"),
-                new File( project.getProjectDir(), "src" + File.separator + "main" + File.separator+ "cpp")
-        );
+        CMakePluginExtension extension = project.getExtensions().create("cmake", CMakePluginExtension.class, project);
 
-        Task cmakeConfigure = project.task("cmakeConfigure").doLast(task -> {
-            List<String> cmdLine = extension.buildConfigCommandLineParameters();
-
-            // log command line parameters
-            StringBuilder sb = new StringBuilder("  CMakePlugin.cmakeConfigure: ");
-            for ( String s : cmdLine ) {
-                sb.append(s).append(" ");
+        /*
+         * cmakeConfigureTask
+         */
+        project.getTasks().register("cmakeConfigure", CMakeConfigureTask.class, new Action<CMakeConfigureTask>() {
+            @Override
+            public void execute(CMakeConfigureTask task) {
+                task.getExecutable().set(extension.getExecutable());
+                task.getWorkingFolder().set(extension.getWorkingFolder());
+                task.getSourceFolder().set(extension.getSourceFolder());
+                task.getConfigurationTypes().set(extension.getConfigurationTypes());
+                task.getInstallPrefix().set(extension.getInstallPrefix());
+                task.getGenerator().set(extension.getGenerator());
+                task.getPlatform().set(extension.getPlatform());
+                task.getToolset().set(extension.getToolset());
+                task.getBuildSharedLibs().set(extension.getBuildSharedLibs());
+                task.getBuildStaticLibs().set(extension.getBuildStaticLibs());
+                task.getDef().set(extension.getDef());
             }
-            project.getLogger().log(LogLevel.INFO, sb.toString());
+        });
 
-            // build process
-            ProcessBuilder pb = new ProcessBuilder(cmdLine);
-            pb.directory( extension.getWorkingFolder() );
-
-            try {
-                // make sure working folder exists
-                extension.getWorkingFolder().mkdirs();
-
-                // start
-                Process process = pb.start();
-
-                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    project.getLogger().log(LogLevel.INFO, line);
-                }
-                if ( null != (line = errorReader.readLine()) ) {
-                    project.getLogger().log(LogLevel.QUIET, "  CMakePlugin.cmakeConfigure - ERRORS: " );
-                    do {
-                        project.getLogger().log(LogLevel.QUIET, line);
-                    } while ((line = errorReader.readLine()) != null);
-                }
-
-
-                int retCode = process.waitFor();
-                if ( retCode != 0 )
-                    throw new GradleException("Error: CMAKE configuration returned "+retCode );
+        project.getTasks().register("cmakeBuild", CMakeBuildTask.class, new Action<CMakeBuildTask>() {
+            @Override
+            public void execute(CMakeBuildTask task) {
+                task.getExecutable().set(extension.getExecutable());
+                task.getWorkingFolder().set(extension.getWorkingFolder());
+                task.getBuildConfig().set(extension.getBuildConfig());
+                task.getBuildTarget().set(extension.getBuildTarget());
+                task.getBuildClean().set(extension.getBuildClean());
             }
-            catch ( IOException e ) {
-                throw new GradleScriptException( "cmake configuration failed.", e );
-            }
-            catch ( InterruptedException e ) {
-                throw new GradleScriptException( "cmake configuration failed.", e );
-            }
-        } );
-        cmakeConfigure.setGroup("cmake");
-        cmakeConfigure.setDescription("Configure a Build with CMake");
-
-
-        Task cmakeBuild = project.task("cmakeBuild").doLast(task -> {
-            List<String> cmdLine = extension.buildBuildCommandLineParameters();
-
-            // log command line parameters
-            StringBuilder sb = new StringBuilder("  CMakePlugin.cmakeBuild: ");
-            for ( String s : cmdLine ) {
-                sb.append(s).append(" ");
-            }
-            project.getLogger().log(LogLevel.INFO, sb.toString());
-
-            // build process
-            ProcessBuilder pb = new ProcessBuilder(cmdLine);
-            try {
-                // start
-                Process process = pb.start();
-
-                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-                BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    project.getLogger().log(LogLevel.INFO, line);
-                }
-                if ( null != (line = errorReader.readLine()) ) {
-                    project.getLogger().log(LogLevel.QUIET, "  CMakePlugin.cmakeBuild - ERRORS: " );
-                    do {
-                        project.getLogger().log(LogLevel.QUIET, line);
-                    } while ((line = errorReader.readLine()) != null);
-                }
-
-                int retCode = process.waitFor();
-                if ( retCode != 0 )
-                    throw new GradleException("Error: CMAKE build returned "+retCode );
-            }
-            catch ( IOException e ) {
-                throw new GradleScriptException( "cmake build failed.", e );
-            }
-            catch ( InterruptedException e ) {
-                throw new GradleScriptException( "cmake build failed.", e );
-            }
-        } );
-        cmakeBuild.setGroup("cmake");
-        cmakeBuild.setDescription("Build a configured Build with CMake");
-        cmakeBuild.dependsOn(cmakeConfigure);
+        });
 
         Task cmakeClean = project.task( "cmakeClean" ).doFirst(task -> {
             // should go to clean...
-            File workingFolder = extension.getWorkingFolder().getAbsoluteFile();
+            File workingFolder = extension.getWorkingFolder().getAsFile().get().getAbsoluteFile();
             if ( workingFolder.exists() ) {
-                project.getLogger().log(LogLevel.INFO, "Deleting folder "+ workingFolder.toString());
+                project.getLogger().info("Deleting folder "+ workingFolder.toString());
                 if (!deleteDirectory(workingFolder))
                     throw new GradleException("Could not delete working folder " + workingFolder);
             }
@@ -150,13 +85,12 @@ public class CMakePlugin implements Plugin<Project> {
         cmakeClean.setGroup("cmake");
         cmakeClean.setDescription("Clean CMake configuration");
 
+
+
         Task cmakeGenerators = project.task( "cmakeGenerators" ).doFirst(task -> {
             // should go to clean...
-            ProcessBuilder pb = new ProcessBuilder(extension.getExecutable(), "--help");
+            ProcessBuilder pb = new ProcessBuilder(extension.getExecutable().getOrElse("cmake"), "--help");
             try {
-                // make sure working folder exists
-                extension.getWorkingFolder().mkdirs();
-
                 // start
                 Process process = pb.start();
 
@@ -172,21 +106,18 @@ public class CMakePlugin implements Plugin<Project> {
                 process.waitFor();
             }
             catch ( IOException e ) {
-                throw new GradleScriptException( "cmake configuration failed.", e );
+                throw new GradleScriptException( "cmake --help failed.", e );
             }
             catch ( InterruptedException e ) {
-                throw new GradleScriptException( "cmake configuration failed.", e );
-            }
-
-            File workingFolder = extension.getWorkingFolder().getAbsoluteFile();
-            if ( workingFolder.exists() ) {
-                project.getLogger().log(LogLevel.INFO, "Deleting folder "+ workingFolder.toString());
-                if (!deleteDirectory(workingFolder))
-                    throw new GradleException("Could not delete working folder " + workingFolder);
+                throw new GradleScriptException( "cmake --help failed.", e );
             }
         });
         cmakeGenerators.setGroup("cmake");
         cmakeGenerators.setDescription("List available CMake generators");
+
+        TaskContainer tasks = project.getTasks();
+        tasks.getByName("cmakeBuild").dependsOn(tasks.getByName("cmakeConfigure"));
+
 
     }
 

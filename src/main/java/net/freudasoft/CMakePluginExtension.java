@@ -16,209 +16,118 @@
 
 package net.freudasoft;
 
+import org.gradle.api.Project;
+import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.provider.MapProperty;
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Input;
+
 import java.io.File;
 import java.util.*;
 
 public class CMakePluginExtension {
-    private String executable = "cmake";
-    private File workingFolder;
-    private File sourceFolder;
-    private String configurationTypes = "";
-    private String installPrefix = "";
-    private String generator = ""; // for example: "Visual Studio 16 2019"
-    private String platform = ""; // for example "x64" or "Win32" or "ARM" or "ARM64", supported on vs > 8.0
-    private String toolset = ""; // for example "v142", supported on vs > 10.0
-    private Optional<Boolean> buildSharedLibs = Optional.empty();
-    private Optional<Boolean> buildStaticLibs = Optional.empty();
-    private Map<String,String> def = new HashMap<>();
+
+
+    // parameters used by config and build step
+    private final Property<String> executable;
+    private final DirectoryProperty workingFolder;
+
+    // parameters used by config step
+    private final DirectoryProperty sourceFolder;
+    private final Property<String> configurationTypes;
+    private final Property<String>  installPrefix;
+    private final Property<String> generator; // for example: "Visual Studio 16 2019"
+    private final Property<String> platform ; // for example "x64" or "Win32" or "ARM" or "ARM64", supported on vs > 8.0
+    private final Property<String> toolset; // for example "v142", supported on vs > 10.0
+    private final Property<Boolean> buildSharedLibs;
+    private final Property<Boolean> buildStaticLibs;
+    private final MapProperty<String,String> def;
 
     // parameters used on build step
-    private String buildConfig = "";
-    private String buildTarget = "";
-    private boolean buildClean = false;
+    private final Property<String> buildConfig;
+    private final Property<String> buildTarget;
+    private final Property<Boolean> buildClean;
 
-    public CMakePluginExtension( File workingFolder, File sourceFolder ) {
-        this.workingFolder = workingFolder;
-        this.sourceFolder = sourceFolder;
+
+    public CMakePluginExtension(Project project) {
+        executable = project.getObjects().property(String.class);
+        workingFolder = project.getObjects().directoryProperty();
+        sourceFolder = project.getObjects().directoryProperty();
+        configurationTypes = project.getObjects().property(String.class);
+        installPrefix = project.getObjects().property(String.class);
+        generator = project.getObjects().property(String.class);
+        platform = project.getObjects().property(String.class);
+        toolset = project.getObjects().property(String.class);
+        buildSharedLibs = project.getObjects().property(Boolean.class);
+        buildStaticLibs = project.getObjects().property(Boolean.class);
+        def = project.getObjects().mapProperty(String.class, String.class);
+        buildConfig = project.getObjects().property(String.class);
+        buildTarget = project.getObjects().property(String.class);
+        buildClean = project.getObjects().property(Boolean.class);
+
+        // default values
+        workingFolder.set(new File(project.getBuildDir(), "cmake"));
+        sourceFolder.set(new File(project.getBuildDir(), "src" + File.separator + "main" + File.separator + "cpp"));
     }
 
-    public String getExecutable() {
+/// region getters
+    public Property<String> getExecutable() {
         return executable;
     }
 
-    public void setExecutable(String executable) {
-        this.executable = executable;
-    }
-
-    public File getWorkingFolder() {
+    public DirectoryProperty getWorkingFolder() {
         return workingFolder;
     }
 
-    public void setWorkingFolder(File workingFolder) {
-        this.workingFolder = workingFolder;
-    }
-
-    public File getSourceFolder() {
+    public DirectoryProperty getSourceFolder() {
         return sourceFolder;
     }
 
-    public void setSourceFolder(File sourceFolder) {
-        this.sourceFolder = sourceFolder;
-    }
-
-    public String getConfigurationTypes() {
+    public Property<String> getConfigurationTypes() {
         return configurationTypes;
     }
 
-    public void setConfigurationTypes(String configurationTypes) {
-        this.configurationTypes = configurationTypes;
-    }
-
-    public String getInstallPrefix() {
+    public Property<String> getInstallPrefix() {
         return installPrefix;
     }
 
-    public void setInstallPrefix(String installPrefix) {
-        this.installPrefix = installPrefix;
-    }
-
-    public String getGenerator() {
+    public Property<String> getGenerator() {
         return generator;
     }
 
-    public void setGenerator(String generator) {
-        this.generator = generator;
-    }
-
-    public String getPlatform() {
+    public Property<String> getPlatform() {
         return platform;
     }
-
-    public void setPlatform(String platform) {
-        this.platform = platform;
-    }
-
-    public String getToolset() {
+    public Property<String> getToolset() {
         return toolset;
     }
 
-    public void setToolset(String toolset) {
-        this.toolset = toolset;
-    }
-
-    public Optional<Boolean> getBuildSharedLibs() {
+    public Property<Boolean> getBuildSharedLibs() {
         return buildSharedLibs;
     }
 
-    public void setBuildSharedLibs(boolean buildSharedLibs) {
-        this.buildSharedLibs = Optional.of(buildSharedLibs);
-    }
-
-    public Optional<Boolean> getBuildStaticLibs() {
+    public Property<Boolean> getBuildStaticLibs() {
         return buildStaticLibs;
     }
 
-    public void setBuildStaticLibs(boolean buildStaticLibs) {
-        this.buildStaticLibs = Optional.of(buildStaticLibs);
-    }
-
-    public void setDef(Map<String,String> def) {
-        this.def = def;
-    }
-    public Map<String,String> getDef() {
+    public MapProperty<String, String> getDef() {
         return def;
     }
 
-    public String getBuildConfig() {
+    public Property<String> getBuildConfig() {
         return buildConfig;
     }
 
-    public void setBuildConfig(String buildConfig) {
-        this.buildConfig = buildConfig;
-    }
-
-    public String getBuildTarget() {
+    public Property<String> getBuildTarget() {
         return buildTarget;
     }
 
-    public void setBuildTarget(String buildTarget) {
-        this.buildTarget = buildTarget;
-    }
-
-    public boolean isBuildClean() {
+    public Property<Boolean> getBuildClean() {
         return buildClean;
     }
-
-    public void setBuildClean(boolean buildClean) {
-        this.buildClean = buildClean;
-    }
+/// endregion getters
 
 
-    List<String> buildConfigCommandLineParameters() {
-        List<String> parameters = new ArrayList<>();
-
-        parameters.add(executable);
-
-        if ( ! generator.isEmpty() ) {
-            parameters.add("-G");
-            parameters.add(generator);
-        }
-
-        if (! platform.isEmpty() ) {
-            parameters.add("-A");
-            parameters.add(platform);
-        }
-
-        if (! toolset.isEmpty() ) {
-            parameters.add("-T");
-            parameters.add(toolset);
-        }
-
-        if (! configurationTypes.isEmpty() ) {
-            parameters.add("-DCMAKE_CONFIGURATION_TYPES="+ configurationTypes);
-        }
-
-        if (! installPrefix.isEmpty() )
-            parameters.add("-DCMAKE_INSTALL_PREFIX="+installPrefix);
-
-
-        if ( buildSharedLibs.isPresent() ) {
-            parameters.add("-DBUILD_SHARED_LIBS=" + (buildSharedLibs.get().booleanValue() ? "ON" : "OFF") );
-        }
-        if ( buildStaticLibs.isPresent() ) {
-            parameters.add("-DBUILD_STATIC_LIBS=" + (buildStaticLibs.get().booleanValue() ? "ON" : "OFF") );
-        }
-
-        for ( Map.Entry<String,String> entry : def.entrySet() )
-            parameters.add("-D"+entry.getKey()+"="+entry.getValue());
-
-        parameters.add( sourceFolder.getAbsolutePath() );
-
-        return parameters;
-    }
-
-    List<String> buildBuildCommandLineParameters() {
-        List<String> parameters = new ArrayList<>();
-
-        parameters.add(executable);
-        parameters.add("--build");
-        parameters.add( workingFolder.getAbsolutePath() );
-
-        if ( ! buildConfig.isEmpty() ) {
-            parameters.add("--config");
-            parameters.add(buildConfig);
-        }
-
-        if ( ! buildTarget.isEmpty() ) {
-            parameters.add("--target");
-            parameters.add(buildTarget);
-        }
-
-        if ( buildClean )
-            parameters.add( "--clean-first" );
-
-        return parameters;
-    }
 
 
 }

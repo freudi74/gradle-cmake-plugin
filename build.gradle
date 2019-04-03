@@ -7,13 +7,15 @@
  */
 
 plugins {
+    // to publish the plugin at the gradle plugin portal
+    id "com.gradle.plugin-publish" version "0.10.1"
     // Apply the java-library plugin to add support for Java Library
     id 'java-gradle-plugin'
     id 'maven-publish'
 }
 
 group = "net.freudasoft"
-version = "0.0.1"
+version = "0.0.2"
 
 repositories {
     // Use jcenter for resolving your dependencies.
@@ -29,17 +31,25 @@ dependencies {
 
 gradlePlugin {
     plugins {
-        simplePlugin {
+        cmakePlugin {
             id = 'net.freudasoft.gradle-cmake-plugin'
             implementationClass = 'net.freudasoft.CMakePlugin'
         }
     }
 }
 
-publishing {
-    repositories {
-        maven {
-            url = uri("$buildDir/repo")
+// The configuration example below shows the minimum required properties
+// configured to publish your plugin to the plugin portal
+pluginBundle {
+    website = 'https://github.com/freudi74/gradle-cmake-plugin'
+    vcsUrl = 'https://github.com/freudi74/gradle-cmake-plugin'
+    description = 'Plugin to use Cmake from Gradle'
+    tags = ['cmake', 'c++']
+
+    plugins {
+        cmakePlugin {
+            // id is captured from java-gradle-plugin configuration
+            displayName = 'Gradle CMake plugin'
         }
     }
 }
