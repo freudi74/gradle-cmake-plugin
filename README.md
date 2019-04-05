@@ -87,7 +87,9 @@ cmake {
 
 * *cmakeClean*: Cleans the workingFolder.
 
-## examples
+* *cmakeGenerators*: Trys to list the generators available on the current platform by parsing `cmake --help`'s output.
+
+## Examples
 
 clean, configure and build:
 
