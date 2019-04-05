@@ -4,11 +4,9 @@ This plugin allows to configure and build using CMake.
 This plugin should work as documented, but is in an early development phase. 
 If you have requests or find bugs, please create an issue.
 
-Plugin applies the base plugin automatically. Below tasks are provided by the plugin:
-
 ## Prerequisites
 
-* CMake
+* `CMake` installed on the system.
 
 ## To apply the plugin:
 
