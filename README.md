@@ -63,7 +63,7 @@ and configure by:
 	  buildStaticLibs=true
 	  // optionally set to build shared libs
 	  buildSharedLibs=true
-	  // define any CMAKE parameter. The below adds -Dtest=hello to cmake parameters.
+	  // define arbitrary CMake parameters. The below adds -Dtest=hello to cmake command line.
 	  def.test='hello'
 
 	  ////////////////////
