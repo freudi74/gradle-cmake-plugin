@@ -6,7 +6,7 @@ If you have requests or find bugs, please create an issue.
 
 ## Prerequisites
 
-* `CMake` installed on the system.
+* `CMake` installed on the system. Available [here](https://www.cmake.org "CMake Homepage").
 
 ## To apply the plugin:
 
