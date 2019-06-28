@@ -77,12 +77,12 @@ public class CMakeBuildTask extends DefaultTask {
         parameters.add("--build");
         parameters.add("." ); // working folder will be executable working dir --- workingFolder.getAsFile().get().getAbsolutePath()
 
-        if ( ! buildConfig.isPresent() ) {
+        if ( buildConfig.isPresent() ) {
             parameters.add("--config");
             parameters.add(buildConfig.get());
         }
 
-        if ( ! buildTarget.isPresent() ) {
+        if ( buildTarget.isPresent() ) {
             parameters.add("--target");
             parameters.add(buildTarget.get());
         }
