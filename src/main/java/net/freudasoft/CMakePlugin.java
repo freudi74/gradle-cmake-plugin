@@ -1,12 +1,9 @@
 /**
  * Copyright 2019 Marco Freudenberger
- *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
  * http://www.apache.org/licenses/LICENSE-2.0
- *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,10 +13,13 @@
 
 package net.freudasoft;
 
-import org.gradle.api.*;
+import org.gradle.api.Action;
+import org.gradle.api.GradleException;
+import org.gradle.api.GradleScriptException;
+import org.gradle.api.Plugin;
+import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.logging.LogLevel;
-import org.gradle.api.provider.Property;
-import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.TaskContainer;
 
 import java.io.BufferedReader;
@@ -27,6 +27,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+/**
+ * @author Marco 'freudi74' Freudenberger
+ * @since 28/05/2019
+ */
 public class CMakePlugin implements Plugin<Project> {
     private boolean deleteDirectory(File directoryToBeDeleted) {
         File[] allContents = directoryToBeDeleted.listFiles();
@@ -73,21 +77,21 @@ public class CMakePlugin implements Plugin<Project> {
             }
         });
 
-        Task cmakeClean = project.task( "cmakeClean" ).doFirst(task -> {
+        Task cmakeClean = project.task("cmakeClean").doFirst(task -> {
             // should go to clean...
             File workingFolder = extension.getWorkingFolder().getAsFile().get().getAbsoluteFile();
-            if ( workingFolder.exists() ) {
-                project.getLogger().info("Deleting folder "+ workingFolder.toString());
-                if (!deleteDirectory(workingFolder))
+            if (workingFolder.exists()) {
+                project.getLogger().info("Deleting folder " + workingFolder);
+                if (!deleteDirectory(workingFolder)) {
                     throw new GradleException("Could not delete working folder " + workingFolder);
+                }
             }
         });
         cmakeClean.setGroup("cmake");
         cmakeClean.setDescription("Clean CMake configuration");
 
 
-
-        Task cmakeGenerators = project.task( "cmakeGenerators" ).doFirst(task -> {
+        Task cmakeGenerators = project.task("cmakeGenerators").doFirst(task -> {
             // should go to clean...
             ProcessBuilder pb = new ProcessBuilder(extension.getExecutable().getOrElse("cmake"), "--help");
             try {
@@ -98,18 +102,20 @@ public class CMakePlugin implements Plugin<Project> {
                 String line;
                 boolean foundGenerators = false;
                 while ((line = reader.readLine()) != null) {
-                    if ( line.equals("Generators") )
+                    if (line.equals("Generators")) {
                         foundGenerators = true;
-                    if ( foundGenerators )
+                    }
+                    if (foundGenerators) {
                         project.getLogger().log(LogLevel.QUIET, line);
+                    }
                 }
                 process.waitFor();
             }
-            catch ( IOException e ) {
-                throw new GradleScriptException( "cmake --help failed.", e );
+            catch (IOException e) {
+                throw new GradleScriptException("cmake --help failed.", e);
             }
-            catch ( InterruptedException e ) {
-                throw new GradleScriptException( "cmake --help failed.", e );
+            catch (InterruptedException e) {
+                throw new GradleScriptException("cmake --help failed.", e);
             }
         });
         cmakeGenerators.setGroup("cmake");

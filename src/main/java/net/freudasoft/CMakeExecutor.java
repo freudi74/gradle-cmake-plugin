@@ -10,26 +10,31 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
 
+/**
+ * @author Marco 'freudi74' Freudenberger
+ * @since 28/05/2019
+ */
 public class CMakeExecutor {
-    private Logger logger;
-    private String taskName;
+    private final Logger logger;
+    private final String taskName;
 
-    CMakeExecutor( Logger logger, String taskName ) {
+    CMakeExecutor(Logger logger, String taskName) {
         this.logger = logger;
         this.taskName = taskName;
     }
 
     protected void exec(List<String> cmdLine, File workingFolder) throws GradleException {
         // log command line parameters
-        StringBuilder sb = new StringBuilder("  CMakePlugin.task "+taskName+" - exec: ");
-        for ( String s : cmdLine ) {
-            sb.append(s).append(" ");
+        StringBuilder sb = new StringBuilder("  CMakePlugin.task " + taskName + " - exec: ");
+        for (String s : cmdLine) {
+            sb.append(s)
+                    .append(" ");
         }
         logger.info(sb.toString());
 
         // build process
         ProcessBuilder pb = new ProcessBuilder(cmdLine);
-        pb.directory( workingFolder );
+        pb.directory(workingFolder);
 
 
         try {
@@ -43,25 +48,28 @@ public class CMakeExecutor {
             BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
             String line;
             while ((line = reader.readLine()) != null) {
-                logger.info( line );
+                logger.info(line);
             }
-            if ( null != (line = errorReader.readLine()) ) {
-                logger.error( "  CMakePlugin.cmakeConfigure - ERRORS: " );
-                do {
+            if (null != (line = errorReader.readLine())) {
+                logger.error("  CMakePlugin.cmakeConfigure - ERRORS: ");
+                do
+                {
                     logger.error(line);
-                } while ((line = errorReader.readLine()) != null);
+                }
+                while ((line = errorReader.readLine()) != null);
             }
 
 
             int retCode = process.waitFor();
-            if ( retCode != 0 )
-                throw new GradleException("["+taskName+"]Error: CMAKE returned "+retCode );
+            if (retCode != 0) {
+                throw new GradleException("[" + taskName + "]Error: CMAKE returned " + retCode);
+            }
         }
-        catch ( IOException e ) {
-            throw new GradleScriptException( "CMakeExecutor["+taskName+"].", e );
+        catch (IOException e) {
+            throw new GradleScriptException("CMakeExecutor[" + taskName + "].", e);
         }
-        catch ( InterruptedException e ) {
-            throw new GradleScriptException( "CMakeExecutor["+taskName+"].", e );
+        catch (InterruptedException e) {
+            throw new GradleScriptException("CMakeExecutor[" + taskName + "].", e);
         }
     }
 
