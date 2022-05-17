@@ -3,6 +3,9 @@ package net.freudasoft;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputDirectory;
+import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
 
@@ -19,14 +22,28 @@ import java.util.ArrayList;
  */
 public abstract class AbstractCMakeTask extends DefaultTask {
     private static final int numHostThreads = Runtime.getRuntime().availableProcessors();
-    private static final int numUsableThreads = Math.max(2, numHostThreads - 2);
+    /**
+     * Find the optimal number of threads to use for the build;
+     * We usually aim for n-2 threads, where n is the number of logical host threads,
+     * but since some systems (especially VMs for CI/CDs etc.) might have 2 or less threads,
+     * we define the optimal number of threads as max(min(n, 2), n - 2), which gives us
+     * the results we are looking for.
+     * TODO: maybe make this configurable at some point..
+     */
+    private static final int numUsableThreads = Math.max(Math.min(numHostThreads, 2), numHostThreads - 2);
+
+    protected final Property<String> executable;
+    protected final DirectoryProperty sourceFolder;
     protected final Property<String> generator; // for example: "Visual Studio 16 2019"
-    private final DirectoryProperty workingFolder;
+    protected final DirectoryProperty workingFolder;
 
     protected AbstractCMakeTask() {
         workingFolder = getProject().getObjects().directoryProperty();
         workingFolder.set(new File(getProject().getBuildDir(), "cmake"));
         generator = getProject().getObjects().property(String.class);
+        executable = getProject().getObjects().property(String.class);
+        sourceFolder = getProject().getObjects().directoryProperty();
+        sourceFolder.set(new File(getProject().getBuildDir(), "src" + File.separator + "main" + File.separator + "cpp"));
     }
 
     protected abstract void gatherParameters(ArrayList<String> params);
@@ -37,12 +54,17 @@ public abstract class AbstractCMakeTask extends DefaultTask {
         final CMakePluginExtension ext = (CMakePluginExtension) getProject().getExtensions().getByName("cmake");
         workingFolder.set(ext.getWorkingFolder());
         generator.set(ext.getGenerator());
+        executable.set(ext.getExecutable());
+        sourceFolder.set(ext.getSourceFolder());
         copyConfiguration(ext);
     }
 
     private ArrayList<String> buildCmdLine(String generator) {
         final ArrayList<String> params = new ArrayList<>();
+
+        params.add(executable.getOrElse("cmake"));
         gatherParameters(params);
+        params.add(sourceFolder.getAsFile().get().getAbsolutePath());
 
         if (generator.contains("Visual Studio")) {
             params.add("-- /MP"); // Automatically grabs the right amount of threads
@@ -55,6 +77,17 @@ public abstract class AbstractCMakeTask extends DefaultTask {
         }
 
         return params;
+    }
+
+    @Input
+    @Optional
+    public Property<String> getExecutable() {
+        return executable;
+    }
+
+    @InputDirectory
+    public DirectoryProperty getSourceFolder() {
+        return sourceFolder;
     }
 
     @OutputDirectory

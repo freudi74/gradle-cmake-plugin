@@ -36,7 +36,22 @@ public class CMakeBuildTask extends AbstractCMakeTask {
 
     @Override
     protected void gatherParameters(ArrayList<String> params) {
+        params.add("--build");
+        params.add("."); // working folder will be executable working dir --- workingFolder.getAsFile().get().getAbsolutePath()
 
+        if (!buildConfig.isPresent()) {
+            params.add("--config");
+            params.add(buildConfig.get());
+        }
+
+        if (!buildTarget.isPresent()) {
+            params.add("--target");
+            params.add(buildTarget.get());
+        }
+
+        if (buildClean.getOrElse(false)) {
+            params.add("--clean-first");
+        }
     }
 
     @Input
@@ -62,27 +77,4 @@ public class CMakeBuildTask extends AbstractCMakeTask {
     public Property<Boolean> getBuildClean() {
         return buildClean;
     }
-
-    //private List<String> buildCmdLine() {
-    //    List<String> parameters = new ArrayList<>();
-    //
-    //    parameters.add(executable.getOrElse("cmake"));
-    //    parameters.add("--build");
-    //    parameters.add("." ); // working folder will be executable working dir --- workingFolder.getAsFile().get().getAbsolutePath()
-    //
-    //    if ( ! buildConfig.isPresent() ) {
-    //        parameters.add("--config");
-    //        parameters.add(buildConfig.get());
-    //    }
-    //
-    //    if ( ! buildTarget.isPresent() ) {
-    //        parameters.add("--target");
-    //        parameters.add(buildTarget.get());
-    //    }
-    //
-    //    if ( buildClean.getOrElse(false) )
-    //        parameters.add( "--clean-first" );
-    //
-    //    return parameters;
-    //}
 }
