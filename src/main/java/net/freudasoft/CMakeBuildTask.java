@@ -50,12 +50,12 @@ public class CMakeBuildTask extends AbstractCMakeTask {
         params.add("--build");
         params.add("."); // working folder will be executable working dir --- workingFolder.getAsFile().get().getAbsolutePath()
 
-        if (!buildConfig.isPresent()) {
+        if (buildConfig.isPresent()) {
             params.add("--config");
             params.add(buildConfig.get());
         }
 
-        if (!buildTarget.isPresent()) {
+        if (buildTarget.isPresent()) {
             params.add("--target");
             params.add(buildTarget.get());
         }
