@@ -69,9 +69,14 @@ public class CMakeBuildTask extends AbstractCMakeTask {
     protected void gatherBuildParameters(ArrayList<String> params) {
         final String gen = generator.getOrNull();
 
-        if(gen != null && (gen.equals("Unix Makefiles") || gen.equals("MinGW Makefiles"))) {
-            params.add("-j");
-            params.add(Integer.toString(numUsableThreads));
+        if(gen != null) {
+            if(gen.equals("Unix Makefiles") || gen.equals("MinGW Makefiles")) {
+                params.add("-j");
+                params.add(Integer.toString(numUsableThreads));
+            }
+            else if(gen.contains("Visual Studio")) {
+                params.add("/MP"); // Automatically grabs the right # of threads :)
+            }
         }
     }
 
