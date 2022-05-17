@@ -24,7 +24,7 @@ repositories {
 }
 
 dependencies {
-    compile gradleApi()
+    implementation gradleApi()
     // Use JUnit test framework
     testImplementation 'junit:junit:4.12'
 }
