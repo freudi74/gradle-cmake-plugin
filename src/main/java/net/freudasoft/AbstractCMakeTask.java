@@ -21,17 +21,6 @@ import java.util.ArrayList;
  * @since 17/05/2022
  */
 public abstract class AbstractCMakeTask extends DefaultTask {
-    private static final int numHostThreads = Runtime.getRuntime().availableProcessors();
-    /**
-     * Find the optimal number of threads to use for the build;
-     * We usually aim for n-2 threads, where n is the number of logical host threads,
-     * but since some systems (especially VMs for CI/CDs etc.) might have 2 or less threads,
-     * we define the optimal number of threads as max(min(n, 2), n - 2), which gives us
-     * the results we are looking for.
-     * TODO: maybe make this configurable at some point..
-     */
-    private static final int numUsableThreads = Math.max(Math.min(numHostThreads, 2), numHostThreads - 2);
-
     protected final Property<String> executable;
     protected final DirectoryProperty sourceFolder;
     protected final Property<String> generator; // for example: "Visual Studio 16 2019"
@@ -47,7 +36,7 @@ public abstract class AbstractCMakeTask extends DefaultTask {
     }
 
     protected abstract void gatherParameters(ArrayList<String> params);
-
+    protected abstract void gatherBuildParameters(ArrayList<String> params);
     protected abstract void copyConfiguration(CMakePluginExtension ext);
 
     public void configureFromProject() {
@@ -59,24 +48,27 @@ public abstract class AbstractCMakeTask extends DefaultTask {
         copyConfiguration(ext);
     }
 
-    private ArrayList<String> buildCmdLine(String generator) {
+    private ArrayList<String> buildCmdLine() {
         final ArrayList<String> params = new ArrayList<>();
 
         params.add(executable.getOrElse("cmake"));
         gatherParameters(params);
-        params.add(sourceFolder.getAsFile().get().getAbsolutePath());
 
-        if (generator.contains("Visual Studio")) {
-            params.add("-- /MP"); // Automatically grabs the right amount of threads
-        }
-        else if (generator.contains("MinGW Makefiles")) {
-            params.add(String.format("-- -j %d", numUsableThreads));
-        }
-        else if (generator.contains("Unix Makefiles")) {
-            params.add(String.format("-- -j %d", numUsableThreads));
+        final ArrayList<String> buildParams = new ArrayList<>();
+        gatherBuildParameters(buildParams);
+
+        if(!buildParams.isEmpty()) {
+            params.add("--");
+            params.addAll(buildParams);
         }
 
         return params;
+    }
+
+    @Input
+    @Optional
+    public Property<String> getGenerator() {
+        return generator;
     }
 
     @Input
@@ -97,12 +89,6 @@ public abstract class AbstractCMakeTask extends DefaultTask {
 
     @TaskAction
     public void performAction() {
-        final String generator = this.generator.getOrNull();
-
-        if (generator == null) {
-            throw new IllegalStateException("Missing generator definition");
-        }
-
-        new CMakeExecutor(getLogger(), getName()).exec(buildCmdLine(generator), workingFolder.getAsFile().get());
+        new CMakeExecutor(getLogger(), getName()).exec(buildCmdLine(), workingFolder.getAsFile().get());
     }
 }

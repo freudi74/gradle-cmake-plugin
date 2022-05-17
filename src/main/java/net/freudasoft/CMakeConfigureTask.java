@@ -37,9 +37,9 @@ public class CMakeConfigureTask extends AbstractCMakeTask {
 
     @Override
     protected void gatherParameters(ArrayList<String> params) {
-        if (generator.isPresent() && !generator.get().isEmpty()) {
+        if (this.generator.isPresent() && !this.generator.get().isEmpty()) {
             params.add("-G");
-            params.add(generator.get());
+            params.add(this.generator.get());
         }
 
         if (platform.isPresent() && !platform.get().isEmpty()) {
@@ -71,6 +71,13 @@ public class CMakeConfigureTask extends AbstractCMakeTask {
                 params.add("-D" + entry.getKey() + "=" + entry.getValue());
             }
         }
+
+        params.add(sourceFolder.getAsFile().get().getAbsolutePath());
+    }
+
+    @Override
+    protected void gatherBuildParameters(ArrayList<String> params) {
+
     }
 
     @Override
@@ -94,12 +101,6 @@ public class CMakeConfigureTask extends AbstractCMakeTask {
     @Optional
     public Property<String> getInstallPrefix() {
         return installPrefix;
-    }
-
-    @Input
-    @Optional
-    public Property<String> getGenerator() {
-        return generator;
     }
 
     @Input

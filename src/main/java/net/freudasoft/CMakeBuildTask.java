@@ -12,6 +12,17 @@ import java.util.ArrayList;
  * @since 28/05/2019
  */
 public class CMakeBuildTask extends AbstractCMakeTask {
+    private static final int numHostThreads = Runtime.getRuntime().availableProcessors();
+    /**
+     * Find the optimal number of threads to use for the build;
+     * We usually aim for n-2 threads, where n is the number of logical host threads,
+     * but since some systems (especially VMs for CI/CDs etc.) might have 2 or less threads,
+     * we define the optimal number of threads as max(min(n, 2), n - 2), which gives us
+     * the results we are looking for.
+     * TODO: maybe make this configurable at some point..
+     */
+    private static final int numUsableThreads = Math.max(Math.min(numHostThreads, 2), numHostThreads - 2);
+
     private final Property<String> executable;
     private final Property<String> buildConfig;
     private final Property<String> buildTarget;
@@ -51,6 +62,16 @@ public class CMakeBuildTask extends AbstractCMakeTask {
 
         if (buildClean.getOrElse(false)) {
             params.add("--clean-first");
+        }
+    }
+
+    @Override
+    protected void gatherBuildParameters(ArrayList<String> params) {
+        final String gen = generator.getOrNull();
+
+        if(gen != null && (gen.equals("Unix Makefiles") || gen.equals("MinGW Makefiles"))) {
+            params.add("-j");
+            params.add(Integer.toString(numUsableThreads));
         }
     }
 
